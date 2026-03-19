@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Pendências</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f2a52">
+  <style>
+    
+    :root{
+      --bg:#eef1f5;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#d1d5db;
+      --primary:#0f2a52;
+      --primary2:#163b73;
+      --ok:#1f9d63;
+      --warn:#d4a017;
+      --danger:#c0392b;
+      --wa:#25D366;
+      --chip:#f3f4f6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1040px;margin:0 auto;padding:16px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:18px;
+      box-shadow:0 6px 18px rgba(15,42,82,.06);
+      margin-bottom:16px
+    }
+    h1,h2,h3{margin:0 0 8px}
+    h1{font-size:1.7rem}
+    .sub{color:var(--muted);margin:0}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    @media (max-width:700px){.grid,.grid-3{grid-template-columns:1fr}}
+    label{display:flex;flex-direction:column;gap:8px;font-weight:700}
+    input,select,textarea{
+      width:100%;
+      padding:14px 12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
+      color:var(--text);
+      font:inherit
+    }
+    textarea{min-height:90px;resize:vertical}
+    .wide{grid-column:1/-1}
+    .duracao-box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:#fafafa
+    }
+    .duracao-buttons{display:flex;flex-wrap:wrap;gap:8px}
+    button{
+      border:0;
+      border-radius:14px;
+      padding:12px 14px;
+      font:inherit;
+      cursor:pointer
+    }
+    .primary{
+      background:linear-gradient(180deg,var(--primary),var(--primary2));
+      color:#fff;
+      font-weight:700
+    }
+    .ghost{
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--text)
+    }
+    .danger{
+      background:#fff5f5;
+      border:1px solid #f1b6b6;
+      color:var(--danger)
+    }
+    .wa-btn{background:var(--wa);color:#fff}
+    .mini{padding:8px 10px}
+    .active{
+      outline:2px solid #0b1320;
+      background:var(--primary);
+      color:#fff
+    }
+    .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .task{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      margin-top:12px;
+      background:#fff
+    }
+    .task h3{margin:0 0 8px;font-size:1.05rem}
+    .meta{color:var(--muted);font-size:.95rem;line-height:1.45}
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:.8rem;
+      font-weight:700;
+      margin:6px 6px 0 0
+    }
+    .b1{background:#e7eef9;color:#163b73}
+    .b2{background:#fff4d6;color:#8a5a00}
+    .b3{background:#ffe3e3;color:#a61b1b}
+    .b4{background:#dff7ea;color:#11613d}
+    .timer{font-weight:700;margin-top:8px;color:var(--primary)}
+    .empty{color:var(--muted);text-align:center;padding:20px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+    .toolbar .chip{
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      font-weight:700;
+      cursor:pointer;
+      color:var(--text)
+    }
+    .toolbar .chip.active{
+      background:var(--primary);
+      color:#fff;
+      border-color:var(--primary)
+    }
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap}
+    .thumb{cursor:pointer}
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
+      align-items:center;justify-content:center;padding:16px;z-index:9999
+    }
+    .modal-content{max-width:96vw;max-height:92vh;background:#111;border-radius:16px;padding:10px}
+    .modal-content img,.modal-content video{max-width:92vw;max-height:86vh;display:block;border-radius:10px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    .list-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+    .muted{color:var(--muted)}
+    .hidden{display:none !important}
+    #toast{
+      display:none;position:sticky;top:10px;z-index:999;
+      background:#dff7ea;color:#11613d;border:1px solid #b7e6ca;
+      padding:12px 14px;border-radius:14px;font-weight:700;margin-bottom:12px
+    }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h1>Controle de Pendências</h1>
+          <p class="sub">Uso local • Configurações editáveis</p>
+        </div>
+        <div class="row">
+          <button type="button" class="ghost" id="btnTelaPendencias">Pendências</button>
+          <button type="button" class="ghost" id="btnTelaConfig">Configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast">Pendência salva com sucesso.</div>
+
+    <section id="screenPendencias">
+      <div class="card">
+        <form id="taskForm">
+          <div class="grid">
+            <label>
+              Setor
+              <select id="setor" required></select>
+            </label>
+
+            <label>
+              Área
+              <select id="area" required></select>
+            </label>
+
+            <label>
+              Máquina
+              <select id="maquina" required></select>
+            </label>
+
+            <label>
+              Classificação
+              <select id="classificacao" required>
+                <option value="Mecânica">Mecânica</option>
+                <option value="Elétrica">Elétrica</option>
+                <option value="Eletrônica">Eletrônica</option>
+              </select>
+            </label>
+
+            <label>
+              Criticidade
+              <select id="criticidade" required>
+                <option value="Alta">Alta</option>
+                <option value="Média" selected>Média</option>
+                <option value="Baixa">Baixa</option>
+              </select>
+            </label>
+
+            <label>
+              Data
+              <input type="date" id="data" required>
+            </label>
+
+            <label>
+              Início programado
+              <input type="time" id="horaInicio" required>
+            </label>
+
+            <div class="duracao-box wide">
+              <strong>Duração prevista</strong>
+              <div class="duracao-buttons" id="duracaoButtons">
+                <button type="button" class="ghost mini" data-min="15">15 min</button>
+                <button type="button" class="ghost mini" data-min="30">30 min</button>
+                <button type="button" class="ghost mini" data-min="60">1h</button>
+                <button type="button" class="ghost mini" data-min="120">2h</button>
+                <button type="button" class="ghost mini active" data-min="240">4h</button>
+              </div>
+              <input type="hidden" id="duracao" value="240">
+            </div>
+
+            <label class="wide">
+              Descrição
+              <textarea id="descricao" required placeholder="Descreva a pendência"></textarea>
+            </label>
+
+            <div class="wide">
+              <strong>Fotos e vídeos</strong>
+              <div class="row" style="margin-top:10px">
+                <label style="display:inline-flex;align-items:center;justify-content:center;padding:12px 14px;border:1px solid #d9e2f0;border-radius:14px;background:#fff;cursor:pointer;font-weight:700">
+                  Abrir câmera (foto)
+                  <input type="file" id="cameraFoto" accept="image/*" capture="environment" multiple style="display:none">
+                </label>
+                <label style="display:inline-flex;align-items:center;justify-content:center;padding:12px 14px;border:1px solid #d9e2f0;border-radius:14px;background:#fff;cursor:pointer;font-weight:700">
+                  Abrir câmera (vídeo)
+                  <input type="file" id="cameraVideo" accept="video/*" capture="environment" multiple style="display:none">
+                </label>
+              </div>
+              <div class="muted" style="margin-top:8px">No celular compatível, isso abre direto a câmera traseira.</div>
+            </div>
+
+            <div class="wide" id="previewMidias" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px"></div>
+          </div>
+
+          <div id="duplicateWarning" class="hidden" style="color:#a61b1b;background:#ffe3e3;border:1px solid #ffc9c9;padding:10px 12px;border-radius:12px;margin-top:14px;font-weight:700"></div>
+          <div class="actions" style="margin-top:14px">
+            <button type="submit" class="primary">Salvar pendência</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2 style="margin:0">Lista de pendências</h2>
+          <div id="counts" class="meta"></div>
+        </div>
+        <div class="toolbar" id="filters">
+          <button type="button" class="chip active" data-filter="abertas">Abertas</button>
+          <button type="button" class="chip" data-filter="alta">Criticidade alta</button>
+          <button type="button" class="chip" data-filter="media">Criticidade média</button>
+          <button type="button" class="chip" data-filter="baixa">Criticidade baixa</button>
+          <button type="button" class="chip" data-filter="paradas">Paradas</button>
+          <button type="button" class="chip" data-filter="concluidas">Concluídas</button>
+          <button type="button" class="chip" data-filter="todas">Todas</button>
+        </div>
+        <div id="taskList"></div>
+      </div>
+    </section>
+
+    <section id="screenConfig" class="hidden">
+      <div class="card">
+        <h2>Configurações</h2>
+        <p class="sub">Cadastre setores, áreas e máquinas. Essas listas alimentam o formulário da pendência.</p>
+      </div>
+
+      <div class="card">
+        <h3>Setores</h3>
+        <div class="grid">
+          <label>
+            Novo setor
+            <input type="text" id="novoSetor" placeholder="Ex.: UPGR">
+          </label>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button type="button" class="primary" id="addSetorBtn">Adicionar setor</button>
+        </div>
+        <div id="listaSetores" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h3>Áreas</h3>
+        <div class="grid">
+          <label>
+            Nova área
+            <input type="text" id="novaArea" placeholder="Ex.: Frisos">
+          </label>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button type="button" class="primary" id="addAreaBtn">Adicionar área</button>
+        </div>
+        <div id="listaAreas" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h3>Máquinas</h3>
+        <div class="grid">
+          <label>
+            Área da máquina
+            <select id="areaDaNovaMaquina"></select>
+          </label>
+          <label>
+            Nova máquina
+            <input type="text" id="novaMaquina" placeholder="Ex.: LCG1">
+          </label>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button type="button" class="primary" id="addMaquinaBtn">Adicionar máquina</button>
+        </div>
+        <div id="listaMaquinas" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <div id="mediaModal" class="modal-backdrop" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal-content" id="mediaModalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_CONFIG = {
+      setores: ['UPGR', 'UPA'],
+      areas: ['Confecção', 'Cortadeiras', 'Frisos'],
+      machinesByArea: {
+        'Confecção': ['LCG1','LCG2','LCZ1','LCZ2','LCZ3','LCZ4','LCZ5','LCZ6','4T1','4T2','4T3','4T4'],
+        'Cortadeiras': ['CTB1','CTB2','TTM15-1','TTM15-2','TTM90','VMI','REPASSADEIRA DE FORRO'],
+        'Frisos': ['TST1','TST2','DELTAX1','DELTAX2','DELTAX3','DELTAX4','AUTO CLAVE','MONO1','MONO2','MONO3','MONO4','MONO5','LANDINI1']
+      }
+    };
+
+    const els = {
+      taskForm: document.getElementById('taskForm'),
+      setor: document.getElementById('setor'),
+      area: document.getElementById('area'),
+      maquina: document.getElementById('maquina'),
+      criticidade: document.getElementById('criticidade'),
+      classificacao: document.getElementById('classificacao'),
+      data: document.getElementById('data'),
+      horaInicio: document.getElementById('horaInicio'),
+      duracao: document.getElementById('duracao'),
+      descricao: document.getElementById('descricao'),
+      cameraFoto: document.getElementById('cameraFoto'),
+      cameraVideo: document.getElementById('cameraVideo'),
+      previewMidias: document.getElementById('previewMidias'),
+      taskList: document.getElementById('taskList'),
+      counts: document.getElementById('counts'),
+      filters: document.getElementById('filters'),
+      mediaModal: document.getElementById('mediaModal'),
+      mediaModalContent: document.getElementById('mediaModalContent'),
+      toast: document.getElementById('toast'),
+      duplicateWarning: document.getElementById('duplicateWarning'),
+      btnTelaPendencias: document.getElementById('btnTelaPendencias'),
+      btnTelaConfig: document.getElementById('btnTelaConfig'),
+      screenPendencias: document.getElementById('screenPendencias'),
+      screenConfig: document.getElementById('screenConfig'),
+      novoSetor: document.getElementById('novoSetor'),
+      addSetorBtn: document.getElementById('addSetorBtn'),
+      listaSetores: document.getElementById('listaSetores'),
+      novaArea: document.getElementById('novaArea'),
+      addAreaBtn: document.getElementById('addAreaBtn'),
+      listaAreas: document.getElementById('listaAreas'),
+      areaDaNovaMaquina: document.getElementById('areaDaNovaMaquina'),
+      novaMaquina: document.getElementById('novaMaquina'),
+      addMaquinaBtn: document.getElementById('addMaquinaBtn'),
+      listaMaquinas: document.getElementById('listaMaquinas')
+    };
+
+    let currentFilter = 'abertas';
+    let selectedMedia = [];
+
+    function normalizeText(value){
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function showToast(message, isError = false){
+      els.toast.textContent = message;
+      els.toast.style.display = 'block';
+      els.toast.style.background = isError ? '#ffe3e3' : '#dff7ea';
+      els.toast.style.color = isError ? '#a61b1b' : '#11613d';
+      els.toast.style.borderColor = isError ? '#ffc9c9' : '#b7e6ca';
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        els.toast.style.display = 'none';
+      }, 2400);
+    }
+
+    function loadConfig(){
+      try {
+        const raw = JSON.parse(localStorage.getItem('pendencias_config_v1') || 'null');
+        if (!raw || !Array.isArray(raw.setores) || !Array.isArray(raw.areas) || typeof raw.machinesByArea !== 'object') {
+          return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        }
+        const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        merged.setores = [...new Set(raw.setores.filter(Boolean))];
+        merged.areas = [...new Set(raw.areas.filter(Boolean))];
+        merged.machinesByArea = raw.machinesByArea || {};
+        merged.areas.forEach(a => {
+          if (!Array.isArray(merged.machinesByArea[a])) merged.machinesByArea[a] = [];
+        });
+        return merged;
+      } catch(e) {
+        return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      }
+    }
+
+    function saveConfig(){
+      try {
+        localStorage.setItem('pendencias_config_v1', JSON.stringify(config));
+        return true;
+      } catch(e) {
+        showToast('Falha ao salvar configurações.', true);
+        return false;
+      }
+    }
+
+    function loadTasks(){
+      try {
+        const raw = JSON.parse(localStorage.getItem('pendencias_local_v3') || '[]');
+        return Array.isArray(raw) ? raw : [];
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveTasks(){
+      try {
+        localStorage.setItem('pendencias_local_v3', JSON.stringify(tasks));
+        return true;
+      } catch(e) {
+        showToast('Falha ao salvar. Reduza a quantidade de vídeos grandes.', true);
+        return false;
+      }
+    }
+
+    let config = loadConfig();
+    let tasks = loadTasks();
+
+    function setDefaults(){
+      const now = new Date();
+      els.data.value = now.toISOString().slice(0,10);
+      els.horaInicio.value = '09:00';
+    }
+
+    function fillSetores(){
+      const current = els.setor.value;
+      els.setor.innerHTML = '' + config.setores.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (config.setores.includes(current)) els.setor.value = current;
+      else if (config.setores[0]) els.setor.value = config.setores[0];
+    }
+
+    function fillAreas(){
+      const current = els.area.value;
+      els.area.innerHTML = '' + config.areas.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (config.areas.includes(current)) els.area.value = current;
+      else if (config.areas[0]) els.area.value = config.areas[0];
+      fillAreaMaquinaConfigSelect();
+      updateMachines();
+    }
+
+    function fillAreaMaquinaConfigSelect(){
+      const current = els.areaDaNovaMaquina.value;
+      els.areaDaNovaMaquina.innerHTML = '' + config.areas.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (config.areas.includes(current)) els.areaDaNovaMaquina.value = current;
+      else if (config.areas[0]) els.areaDaNovaMaquina.value = config.areas[0];
+    }
+
+    function updateMachines(){
+      const area = els.area.value;
+      const list = config.machinesByArea[area] || [];
+      els.maquina.innerHTML = list.length
+        ? list.map((m,i) => `<option value="${m}" ${i===0?'selected':''}>${m}</option>`).join('')
+        : '<option value="">Cadastre máquinas nessa área</option>';
+      validateDuplicatePreview();
+    }
+
+    function renderConfig(){
+      els.listaSetores.innerHTML = config.setores.length ? config.setores.map(s => `
+        <div class="list-item" style="margin-top:8px">
+          <div>${s}</div>
+          <button type="button" class="danger mini" onclick="removerSetor('${s.replace(/'/g, "\\'")}')">Excluir</button>
+        </div>
+      `).join('') : '<div class="empty">Nenhum setor cadastrado.</div>';
+
+      els.listaAreas.innerHTML = config.areas.length ? config.areas.map(a => `
+        <div class="list-item" style="margin-top:8px">
+          <div>${a}</div>
+          <button type="button" class="danger mini" onclick="removerArea('${a.replace(/'/g, "\\'")}')">Excluir</button>
+        </div>
+      `).join('') : '<div class="empty">Nenhuma área cadastrada.</div>';
+
+      const machineRows = [];
+      config.areas.forEach(area => {
+        const arr = config.machinesByArea[area] || [];
+        arr.forEach(m => {
+          machineRows.push(`
+            <div class="list-item" style="margin-top:8px">
+              <div><strong>${m}</strong> <span class="muted">• ${area}</span></div>
+              <button type="button" class="danger mini" onclick="removerMaquina('${area.replace(/'/g, "\\'")}','${m.replace(/'/g, "\\'")}')">Excluir</button>
+            </div>
+          `);
+        });
+      });
+      els.listaMaquinas.innerHTML = machineRows.length ? machineRows.join('') : '<div class="empty">Nenhuma máquina cadastrada.</div>';
+    }
+
+    function getCounts(){
+      return {
+        abertas: tasks.filter(t => t.status !== 'Concluído').length,
+        alta: tasks.filter(t => t.criticidade === 'Alta' && t.status !== 'Concluído').length,
+        media: tasks.filter(t => t.criticidade === 'Média' && t.status !== 'Concluído').length,
+        baixa: tasks.filter(t => t.criticidade === 'Baixa' && t.status !== 'Concluído').length,
+        paradas: tasks.filter(t => t.status === 'Parado').length,
+        concluidas: tasks.filter(t => t.status === 'Concluído').length
+      };
+    }
+
+    function applyFilter(list){
+      if (currentFilter === 'abertas') return list.filter(t => t.status !== 'Concluído');
+      if (currentFilter === 'alta') return list.filter(t => t.criticidade === 'Alta' && t.status !== 'Concluído');
+      if (currentFilter === 'media') return list.filter(t => t.criticidade === 'Média' && t.status !== 'Concluído');
+      if (currentFilter === 'baixa') return list.filter(t => t.criticidade === 'Baixa' && t.status !== 'Concluído');
+      if (currentFilter === 'paradas') return list.filter(t => t.status === 'Parado');
+      if (currentFilter === 'concluidas') return list.filter(t => t.status === 'Concluído');
+      return list;
+    }
+
+    function prazoInfo(t){
+      const inicio = new Date(`${t.data}T${t.horaInicio}:00`);
+      const fim = new Date(inicio.getTime() + Number(t.duracao || 0) * 60000);
+      const agora = new Date();
+      if (t.status === 'Concluído') return {txt: 'Concluída', cls: 'b4'};
+      if (agora < inicio) return {txt: 'Aguardando início', cls: 'b1'};
+      const total = fim - inicio;
+      const restante = fim - agora;
+      if (restante <= 0) return {txt: 'Vencida', cls: 'b3'};
+      if (restante <= total * 0.2) return {txt: 'Vencendo', cls: 'b2'};
+      return {txt: 'No prazo', cls: 'b4'};
+    }
+
+    function formatRestante(t){
+      const inicio = new Date(`${t.data}T${t.horaInicio}:00`);
+      const fim = new Date(inicio.getTime() + Number(t.duracao || 0) * 60000);
+      let ms = fim - new Date();
+      if (t.status === 'Concluído') return 'Concluída';
+      if (ms <= 0) return '00:00';
+      const totalMin = Math.floor(ms / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+
+    function renderPreview(filesData){
+      if (!filesData || !filesData.length){
+        els.previewMidias.innerHTML = '';
+        return;
+      }
+      els.previewMidias.innerHTML = filesData.map((m) => {
+        if ((m.type || '').startsWith('image/')) {
+          return `<div style="border:1px solid #d9e2f0;border-radius:12px;padding:6px;background:#fff">
+            <img src="${m.data}" style="width:100%;height:100px;object-fit:cover;border-radius:8px">
+          </div>`;
+        }
+        return `<div style="border:1px solid #d9e2f0;border-radius:12px;padding:6px;background:#fff">
+          <video src="${m.data}" controls preload="metadata" style="width:100%;height:100px;object-fit:cover;border-radius:8px"></video>
+        </div>`;
+      }).join('');
+    }
+
+    function filesToDataList(fileList){
+      const files = Array.from(fileList || []);
+      return Promise.all(files.map(file => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({
+          name: file.name,
+          type: file.type,
+          data: reader.result
+        });
+        reader.readAsDataURL(file);
+      })));
+    }
+
+    function openMedia(src, type){
+      els.mediaModalContent.innerHTML = (type || '').startsWith('image/')
+        ? `<img src="${src}">`
+        : `<video src="${src}" controls autoplay></video>`;
+      els.mediaModal.style.display = 'flex';
+    }
+    window.openMedia = openMedia;
+
+    function buildTextoPendencia(t){
+      return [
+        'Pendência de manutenção',
+        `Setor: ${t.setor}`,
+        `Área: ${t.area}`,
+        `Máquina: ${t.maquina}`,
+        `Criticidade: ${t.criticidade}`,
+        `Data: ${String(t.data).split('-').reverse().join('/')}`,
+        `Início: ${t.horaInicio}`,
+        `Duração: ${t.duracao >= 60 ? (t.duracao/60)+'h' : t.duracao+' min'}`,
+        `Status: ${t.status}`,
+        `Descrição: ${t.descricao}`
+      ].join('\n');
+    }
+
+    async function dataUrlToFile(dataUrl, filename, mimeType){
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename || 'anexo', { type: mimeType || blob.type || 'application/octet-stream' });
+    }
+
+    async function compartilharPendencia(id){
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+      const texto = buildTextoPendencia(t);
+
+      try {
+        const mediaFiles = [];
+        if (t.midias && t.midias.length){
+          for (let i = 0; i < t.midias.length; i++) {
+            const m = t.midias[i];
+            const file = await dataUrlToFile(m.data, m.name || ('anexo_' + (i+1)), m.type);
+            mediaFiles.push(file);
+          }
+        }
+        if (navigator.share) {
+          const shareData = { title: 'Pendência de manutenção', text: texto };
+          if (mediaFiles.length && navigator.canShare && navigator.canShare({ files: mediaFiles })) {
+            shareData.files = mediaFiles;
+          }
+          await navigator.share(shareData);
+          showToast('Compartilhamento aberto.');
+          return;
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        showToast('Seu aparelho não permitiu mídia direta. Texto enviado para o WhatsApp.', true);
+      } catch(e) {
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        showToast('Compartilhamento com mídia não disponível neste aparelho. Texto enviado para o WhatsApp.', true);
+      }
+    }
+    window.compartilharPendencia = compartilharPendencia;
+
+    function isDuplicateTask(candidate){
+      return tasks.some(t =>
+        normalizeText(t.setor) === normalizeText(candidate.setor) &&
+        normalizeText(t.area) === normalizeText(candidate.area) &&
+        normalizeText(t.maquina) === normalizeText(candidate.maquina) &&
+        normalizeText(t.descricao) === normalizeText(candidate.descricao) &&
+        t.data === candidate.data &&
+        t.horaInicio === candidate.horaInicio &&
+        t.status !== 'Concluído'
+      );
+    }
+
+    function validateDuplicatePreview(){
+      const candidate = {
+        setor: els.setor.value,
+        area: els.area.value,
+        maquina: els.maquina.value,
+        descricao: els.descricao.value,
+        data: els.data.value,
+        horaInicio: els.horaInicio.value
+      };
+      if (!candidate.setor || !candidate.area || !candidate.maquina || !candidate.descricao.trim() || !candidate.data || !candidate.horaInicio){
+        els.duplicateWarning.classList.add('hidden');
+        els.duplicateWarning.textContent = '';
+        return false;
+      }
+      const dup = isDuplicateTask(candidate);
+      if (dup){
+        els.duplicateWarning.textContent = 'Atenção: já existe uma pendência igual aberta para este setor, área, máquina, data e horário.';
+        els.duplicateWarning.classList.remove('hidden');
+      } else {
+        els.duplicateWarning.classList.add('hidden');
+        els.duplicateWarning.textContent = '';
+      }
+      return dup;
+    }
+
+    function renderTasks(){
+      const counts = getCounts();
+      els.counts.textContent = `Abertas: ${counts.abertas} • Alta: ${counts.alta} • Média: ${counts.media} • Baixa: ${counts.baixa} • Paradas: ${counts.paradas} • Concluídas: ${counts.concluidas}`;
+      const list = applyFilter(tasks.slice()).reverse();
+
+      if (!list.length){
+        els.taskList.innerHTML = '<div class="empty">Nenhuma pendência nesta lista.</div>';
+        return;
+      }
+
+      els.taskList.innerHTML = list.map((t) => {
+        const p = prazoInfo(t);
+        return `
+          <div class="task">
+            <h3>${t.descricao}</h3>
+            <div class="meta">
+              <strong>Setor:</strong> ${t.setor} • <strong>Área:</strong> ${t.area} • <strong>Máquina:</strong> ${t.maquina}<br>
+              <strong>Classificação:</strong> ${t.classificacao || '-'} • <strong>Criticidade:</strong> ${t.criticidade} • <strong>Início:</strong> ${String(t.data).split('-').reverse().join('/')} ${t.horaInicio} • <strong>Duração:</strong> ${t.duracao >= 60 ? (t.duracao/60)+'h' : t.duracao+' min'}
+            </div>
+            <div>
+              <span class="badge ${p.cls}">${p.txt}</span>
+              <span class="badge b1">${t.status || 'Pendente'}</span>
+              <span class="badge b1">${t.classificacao || '-'}</span>
+              <span class="badge ${t.criticidade==='Alta'?'b3':(t.criticidade==='Média'?'b2':'b4')}">${t.criticidade}</span>
+            </div>
+            <div class="timer">Tempo restante: ${formatRestante(t)}</div>
+            ${t.midias && t.midias.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px">
+              ${t.midias.map((m) => (m.type || '').startsWith('image/')
+                ? `<img loading="lazy" class="thumb" onclick="openMedia('${m.data}','${m.type}')" src="${m.data}" style="width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid #d9e2f0">`
+                : `<video preload="metadata" class="thumb" onclick="openMedia('${m.data}','${m.type}')" src="${m.data}" style="width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid #d9e2f0"></video>`).join('')}
+            </div>` : ''}
+            <div class="actions" style="margin-top:10px">
+              <button class="ghost mini" onclick="setStatus('${t.id}','Em execução')">Em execução</button>
+              <button class="ghost mini" onclick="setStatus('${t.id}','Parado')">Parado</button>
+              <button class="ghost mini" onclick="setStatus('${t.id}','Concluído')">Concluir</button>
+              <button class="mini wa-btn" onclick="compartilharPendencia('${t.id}')">Compartilhar</button>
+              <button class="danger mini" onclick="removeTask('${t.id}')">Excluir</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setStatus(id, status){
+      tasks = tasks.map(t => t.id === id ? {...t, status} : t);
+      if (saveTasks()) renderTasks();
+    }
+    window.setStatus = setStatus;
+
+    function removeTask(id){
+      tasks = tasks.filter(t => t.id !== id);
+      if (saveTasks()) renderTasks();
+    }
+    window.removeTask = removeTask;
+
+    function screen(name){
+      const isConfig = name === 'config';
+      els.screenPendencias.classList.toggle('hidden', isConfig);
+      els.screenConfig.classList.toggle('hidden', !isConfig);
+    }
+
+    function addSetor(){
+      const name = els.novoSetor.value.trim();
+      if (!name) return showToast('Informe o setor.', true);
+      if (config.setores.some(s => normalizeText(s) === normalizeText(name))) return showToast('Setor já cadastrado.', true);
+      config.setores.push(name);
+      if (!saveConfig()) return;
+      els.novoSetor.value = '';
+      fillSetores();
+      renderConfig();
+      showToast('Setor adicionado.');
+    }
+
+    function addArea(){
+      const name = els.novaArea.value.trim();
+      if (!name) return showToast('Informe a área.', true);
+      if (config.areas.some(a => normalizeText(a) === normalizeText(name))) return showToast('Área já cadastrada.', true);
+      config.areas.push(name);
+      config.machinesByArea[name] = [];
+      if (!saveConfig()) return;
+      els.novaArea.value = '';
+      fillAreas();
+      renderConfig();
+      showToast('Área adicionada.');
+    }
+
+    function addMaquina(){
+      const area = els.areaDaNovaMaquina.value;
+      const name = els.novaMaquina.value.trim();
+      if (!area) return showToast('Selecione a área da máquina.', true);
+      if (!name) return showToast('Informe a máquina.', true);
+      config.machinesByArea[area] = config.machinesByArea[area] || [];
+      if (config.machinesByArea[area].some(m => normalizeText(m) === normalizeText(name))) return showToast('Máquina já cadastrada nessa área.', true);
+      config.machinesByArea[area].push(name);
+      if (!saveConfig()) return;
+      els.novaMaquina.value = '';
+      fillAreas();
+      renderConfig();
+      showToast('Máquina adicionada.');
+    }
+
+    function removerSetor(name){
+      if (!confirm(`Excluir o setor "${name}"?`)) return;
+      config.setores = config.setores.filter(s => s !== name);
+      if (!saveConfig()) return;
+      fillSetores();
+      renderConfig();
+      showToast('Setor excluído.');
+    }
+    window.removerSetor = removerSetor;
+
+    function removerArea(name){
+      if (!confirm(`Excluir a área "${name}" e suas máquinas?`)) return;
+      config.areas = config.areas.filter(a => a !== name);
+      delete config.machinesByArea[name];
+      if (!saveConfig()) return;
+      fillAreas();
+      renderConfig();
+      showToast('Área excluída.');
+    }
+    window.removerArea = removerArea;
+
+    function removerMaquina(area, maquina){
+      if (!confirm(`Excluir a máquina "${maquina}"?`)) return;
+      config.machinesByArea[area] = (config.machinesByArea[area] || []).filter(m => m !== maquina);
+      if (!saveConfig()) return;
+      fillAreas();
+      renderConfig();
+      showToast('Máquina excluída.');
+    }
+    window.removerMaquina = removerMaquina;
+
+    async function appendSelectedFiles(fileList){
+      const filesData = await filesToDataList(fileList);
+      selectedMedia = selectedMedia.concat(filesData);
+      renderPreview(selectedMedia);
+    }
+
+    document.getElementById('duracaoButtons').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-min]');
+      if (!btn) return;
+      document.querySelectorAll('#duracaoButtons button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      els.duracao.value = btn.dataset.min;
+    });
+
+    els.area.addEventListener('change', updateMachines);
+    els.setor.addEventListener('change', validateDuplicatePreview);
+    els.maquina.addEventListener('change', validateDuplicatePreview);
+    els.data.addEventListener('change', validateDuplicatePreview);
+    els.horaInicio.addEventListener('change', validateDuplicatePreview);
+    els.descricao.addEventListener('input', validateDuplicatePreview);
+
+    els.cameraFoto.addEventListener('change', async () => {
+      await appendSelectedFiles(els.cameraFoto.files);
+      els.cameraFoto.value = '';
+    });
+
+    els.cameraVideo.addEventListener('change', async () => {
+      await appendSelectedFiles(els.cameraVideo.files);
+      els.cameraVideo.value = '';
+    });
+
+    els.filters.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]');
+      if (!btn) return;
+      currentFilter = btn.dataset.filter;
+      document.querySelectorAll('#filters .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      renderTasks();
+    });
+
+    els.btnTelaPendencias.addEventListener('click', () => screen('pendencias'));
+    els.btnTelaConfig.addEventListener('click', () => screen('config'));
+    els.addSetorBtn.addEventListener('click', addSetor);
+    els.addAreaBtn.addEventListener('click', addArea);
+    els.addMaquinaBtn.addEventListener('click', addMaquina);
+
+    els.taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const candidate = {
+        setor: els.setor.value,
+        area: els.area.value,
+        maquina: els.maquina.value,
+        descricao: els.descricao.value,
+        data: els.data.value,
+        horaInicio: els.horaInicio.value
+      };
+
+      if (!candidate.setor || !candidate.area || !candidate.maquina) {
+        showToast('Preencha setor, área e máquina.', true);
+        return;
+      }
+      if (isDuplicateTask(candidate)) {
+        validateDuplicatePreview();
+        showToast('Pendência duplicada bloqueada.', true);
+        return;
+      }
+
+      tasks.push({
+        id: String(Date.now()),
+        setor: els.setor.value,
+        area: els.area.value,
+        maquina: els.maquina.value,
+        criticidade: els.criticidade.value,
+        classificacao: els.classificacao.value,
+        data: els.data.value,
+        horaInicio: els.horaInicio.value,
+        duracao: Number(els.duracao.value),
+        descricao: els.descricao.value.trim(),
+        midias: selectedMedia.slice(),
+        status: 'Pendente'
+      });
+
+      if (!saveTasks()) return;
+
+      els.descricao.value = '';
+      selectedMedia = [];
+      renderPreview([]);
+      validateDuplicatePreview();
+      renderTasks();
+      showToast('Pendência salva com sucesso.');
+      setTimeout(() => { location.reload(); }, 500);
+    });
+
+    window.addEventListener('error', () => {
+      showToast('Ocorreu um erro inesperado. Reabra a página se necessário.', true);
+    });
+
+    window.addEventListener('unhandledrejection', () => {
+      showToast('Falha em uma operação do aplicativo.', true);
+    });
+
+    // init
+    setDefaults();
+    fillSetores();
+    fillAreas();
+    renderConfig();
+    renderTasks();
+    setInterval(renderTasks, 60000);
+  </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
